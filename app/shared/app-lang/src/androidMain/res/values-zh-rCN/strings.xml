@@ -1223,6 +1223,12 @@
     <string name="subject_episode_video_settings_enable_regex_filter">启用正则弹幕过滤器</string>
     <string name="subject_episode_video_settings_manage_regex_filter">管理正则弹幕过滤器</string>
     <string name="subject_episode_video_settings_debug_mode">弹幕调试模式</string>
+    <string name="settings_player_hardware_decoding">硬件加速视频解码</string>
+    <string name="settings_player_hardware_decoding_description">使用 GPU 解码视频，减轻 CPU 负担。需要重新启动应用程序后生效。（仅桌面版）</string>
+    <string name="settings_player_hardware_decoding_mode">硬件解码模式</string>
+    <string name="settings_player_hardware_decoding_mode_dxva2">DXVA2</string>
+    <string name="settings_player_hardware_decoding_mode_d3d11va">D3D11VA</string>
+    <string name="settings_player_hardware_decoding_mode_auto">自動（建議）</string>
 </resources>
 
 <!--@formatter:on-->

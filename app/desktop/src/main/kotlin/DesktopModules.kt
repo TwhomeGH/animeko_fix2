@@ -19,6 +19,7 @@ import me.him188.ani.app.data.persistent.dataStores
 import me.him188.ani.app.data.persistent.database.AniDatabase
 import me.him188.ani.app.data.repository.WindowStateRepository
 import me.him188.ani.app.data.repository.WindowStateRepositoryImpl
+import me.him188.ani.app.data.models.preference.VideoPlayerSettings
 import me.him188.ani.app.data.repository.user.SettingsRepository
 import me.him188.ani.app.domain.foundation.HttpClientProvider
 import me.him188.ani.app.domain.foundation.ScopedHttpClientUserAgent
@@ -64,9 +65,12 @@ import org.koin.dsl.module
 import org.openani.mediamp.MediampPlayerFactory
 import org.openani.mediamp.MediampPlayerFactoryLoader
 import org.openani.mediamp.compose.MediampPlayerSurfaceProviderLoader
+import org.openani.mediamp.vlc.VlcMediampPlayer
 import org.openani.mediamp.vlc.VlcMediampPlayerFactory
 import org.openani.mediamp.vlc.compose.VlcMediampPlayerSurfaceProvider
 import java.io.File
+import kotlin.coroutines.CoroutineContext
+import kotlin.reflect.KClass
 import kotlin.io.path.Path
 
 fun getDesktopModules(getContext: () -> DesktopContext, scope: CoroutineScope) = module {
@@ -127,7 +131,20 @@ fun getDesktopModules(getContext: () -> DesktopContext, scope: CoroutineScope) =
     }
 
     single<MediampPlayerFactory<*>> {
-        MediampPlayerFactoryLoader.register(VlcMediampPlayerFactory())
+        val settingsRepository = get<SettingsRepository>()
+        val factory = object : MediampPlayerFactory<VlcMediampPlayer> {
+            override val forClass: KClass<VlcMediampPlayer> = VlcMediampPlayer::class
+            override fun create(
+                context: Any,
+                parentCoroutineContext: CoroutineContext
+            ): VlcMediampPlayer {
+                val args = runBlocking {
+                    settingsRepository.videoPlayerSettings.flow.first().vlcFactoryArgs
+                }
+                return VlcMediampPlayer(args, parentCoroutineContext)
+            }
+        }
+        MediampPlayerFactoryLoader.register(factory)
         MediampPlayerSurfaceProviderLoader.register(VlcMediampPlayerSurfaceProvider())
         MediampPlayerFactoryLoader.first()
     }

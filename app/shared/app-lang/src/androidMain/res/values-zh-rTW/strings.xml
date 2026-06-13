@@ -1188,6 +1188,12 @@
     <string name="subject_episode_video_settings_enable_regex_filter">啟用正則彈幕過濾器</string>
     <string name="subject_episode_video_settings_manage_regex_filter">管理正則彈幕過濾器</string>
     <string name="subject_episode_video_settings_debug_mode">彈幕除錯模式</string>
+    <string name="settings_player_hardware_decoding">硬體加速影片解碼</string>
+    <string name="settings_player_hardware_decoding_description">使用 GPU 解碼影片，減輕 CPU 負擔。需要重新啟動應用程式後生效。（僅桌面版）</string>
+    <string name="settings_player_hardware_decoding_mode">硬體解碼模式</string>
+    <string name="settings_player_hardware_decoding_mode_dxva2">DXVA2</string>
+    <string name="settings_player_hardware_decoding_mode_d3d11va">D3D11VA</string>
+    <string name="settings_player_hardware_decoding_mode_auto">自動（建議）</string>
 </resources>
 
 <!--@formatter:on-->

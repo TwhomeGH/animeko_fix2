@@ -317,6 +317,7 @@ fun SettingsScreen(
                             SettingsTab.UPDATE -> SoftwareUpdateGroup(vm.softwareUpdateGroupState)
                             SettingsTab.PLAYER -> PlayerGroup(
                                 vm.videoScaffoldConfig,
+                                vm.videoPlayerSettings,
                                 vm.danmakuFilterConfigState,
                                 vm.danmakuRegexFilterState,
                                 vm.isInDebugMode,

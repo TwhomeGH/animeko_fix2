@@ -36,6 +36,8 @@ import me.him188.ani.app.data.models.preference.NsfwMode
 import me.him188.ani.app.data.models.preference.ThemeSettings
 import me.him188.ani.app.data.models.preference.UISettings
 import me.him188.ani.app.data.models.preference.UpdateSettings
+import me.him188.ani.app.data.models.preference.HardwareDecodeMode
+import me.him188.ani.app.data.models.preference.VideoPlayerSettings
 import me.him188.ani.app.data.models.preference.VideoScaffoldConfig
 import me.him188.ani.app.data.network.protocol.ReleaseClass
 import me.him188.ani.app.navigation.MainScreenPage
@@ -79,6 +81,12 @@ import me.him188.ani.app.ui.lang.settings_player_fullscreen_only_in_controller
 import me.him188.ani.app.ui.lang.settings_player_hide_selector_on_select
 import me.him188.ani.app.ui.lang.settings_player_long_press_fast_forward_speed
 import me.him188.ani.app.ui.lang.settings_player_long_press_fast_forward_speed_description
+import me.him188.ani.app.ui.lang.settings_player_hardware_decoding
+import me.him188.ani.app.ui.lang.settings_player_hardware_decoding_description
+import me.him188.ani.app.ui.lang.settings_player_hardware_decoding_mode
+import me.him188.ani.app.ui.lang.settings_player_hardware_decoding_mode_dxva2
+import me.him188.ani.app.ui.lang.settings_player_hardware_decoding_mode_d3d11va
+import me.him188.ani.app.ui.lang.settings_player_hardware_decoding_mode_auto
 import me.him188.ani.app.ui.lang.settings_player_pause_on_edit_danmaku
 import me.him188.ani.app.ui.lang.settings_update_auto_check
 import me.him188.ani.app.ui.lang.settings_update_auto_check_description
@@ -145,6 +153,7 @@ fun AppSettingsTab(
     uiSettings: SettingsState<UISettings>,
     themeSettings: SettingsState<ThemeSettings>,
     videoScaffoldConfig: SettingsState<VideoScaffoldConfig>,
+    videoPlayerSettings: SettingsState<VideoPlayerSettings>,
     danmakuFilterConfig: SettingsState<DanmakuFilterConfig>,
     danmakuRegexFilterState: DanmakuRegexFilterState,
     showDebug: Boolean,
@@ -156,6 +165,7 @@ fun AppSettingsTab(
         ThemeGroup(themeSettings)
         PlayerGroup(
             videoScaffoldConfig,
+            videoPlayerSettings,
             danmakuFilterConfig,
             danmakuRegexFilterState,
             showDebug,
@@ -410,12 +420,46 @@ fun SettingsScope.SoftwareUpdateGroup(
 @Composable
 fun SettingsScope.PlayerGroup(
     videoScaffoldConfig: SettingsState<VideoScaffoldConfig>,
+    videoPlayerSettings: SettingsState<VideoPlayerSettings>,
     danmakuFilterConfig: SettingsState<DanmakuFilterConfig>,
     danmakuRegexFilterState: DanmakuRegexFilterState,
     showDebug: Boolean
 ) {
     Group(title = { Text(stringResource(Lang.settings_player)) }) {
         val config by videoScaffoldConfig
+        val vpSettings by videoPlayerSettings
+
+        if (LocalPlatform.current.isDesktop()) {
+            SwitchItem(
+                checked = vpSettings.enableHardwareDecoding,
+                onCheckedChange = {
+                    videoPlayerSettings.update(vpSettings.copy(enableHardwareDecoding = it))
+                },
+                title = { Text(stringResource(Lang.settings_player_hardware_decoding)) },
+                description = { Text(stringResource(Lang.settings_player_hardware_decoding_description)) },
+            )
+            if (vpSettings.enableHardwareDecoding) {
+                HorizontalDividerItem()
+                DropdownItem(
+                    selected = { vpSettings.hwdecMode },
+                    values = { HardwareDecodeMode.entries },
+                    itemText = {
+                        Text(
+                            when (it) {
+                                HardwareDecodeMode.DXVA2 -> stringResource(Lang.settings_player_hardware_decoding_mode_dxva2)
+                                HardwareDecodeMode.D3D11VA -> stringResource(Lang.settings_player_hardware_decoding_mode_d3d11va)
+                                HardwareDecodeMode.AUTO -> stringResource(Lang.settings_player_hardware_decoding_mode_auto)
+                            },
+                        )
+                    },
+                    onSelect = {
+                        videoPlayerSettings.update(vpSettings.copy(hwdecMode = it))
+                    },
+                    title = { Text(stringResource(Lang.settings_player_hardware_decoding_mode)) },
+                )
+            }
+            HorizontalDividerItem()
+        }
         DropdownItem(
             selected = { config.fullscreenSwitchMode },
             values = { FullscreenSwitchMode.entries },
@@ -570,6 +614,7 @@ private fun PreviewAppSettingsTab() {
         uiSettings = rememberTestSettingsState(UISettings.Default),
         themeSettings = rememberTestSettingsState(ThemeSettings.Default),
         videoScaffoldConfig = rememberTestSettingsState(VideoScaffoldConfig.Default),
+        videoPlayerSettings = rememberTestSettingsState(VideoPlayerSettings.Default),
         danmakuFilterConfig = rememberTestSettingsState(DanmakuFilterConfig.Default),
         danmakuRegexFilterState = createTestDanmakuRegexFilterState(),
         showDebug = true,

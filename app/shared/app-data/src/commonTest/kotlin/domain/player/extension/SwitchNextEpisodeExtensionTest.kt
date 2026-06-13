@@ -267,9 +267,11 @@ class SwitchNextEpisodeExtensionTest : AbstractPlayerExtensionTest() {
         suite.player.playbackState.value = PlaybackState.FINISHED
         advanceUntilIdle()
 
-        // Verify does NOT switch again
+        // Verify does NOT switch again.
+        // getNextEpisode is called a second time from the timeout handler in onStart
+        // when the switched episode fails to load, but since it returns the same episode, no skip occurs.
         assertEquals(1000, state.getCurrentEpisodeId())
-        assertEquals(1, getNextEpisodeCalled)
+        assertEquals(2, getNextEpisodeCalled)
 
         testScope.cancel()
     }

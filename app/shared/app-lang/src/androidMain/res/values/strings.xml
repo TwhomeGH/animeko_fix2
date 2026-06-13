@@ -1183,6 +1183,12 @@
     <string name="subject_episode_video_settings_enable_regex_filter">Enable regex danmaku filters</string>
     <string name="subject_episode_video_settings_manage_regex_filter">Manage regex danmaku filters</string>
     <string name="subject_episode_video_settings_debug_mode">Danmaku debug mode</string>
+    <string name="settings_player_hardware_decoding">Hardware-accelerated video decoding</string>
+    <string name="settings_player_hardware_decoding_description">Use GPU to decode video, reducing CPU load. Auto mode tries D3D11VA → DXVA2 → software fallback. (Desktop only)</string>
+    <string name="settings_player_hardware_decoding_mode">Hardware decoding mode</string>
+    <string name="settings_player_hardware_decoding_mode_dxva2">DXVA2</string>
+    <string name="settings_player_hardware_decoding_mode_d3d11va">D3D11VA</string>
+    <string name="settings_player_hardware_decoding_mode_auto">Auto (Recommended)</string>
 </resources>
 
 <!--@formatter:on-->

@@ -96,6 +96,7 @@ class MediaSelectorAutoSelect(
         sourceTiers: MediaSelectorSourceTiers,
         overrideUserSelection: Boolean = false,
         blacklistMediaIds: Set<String> = emptySet(),
+        blacklistMediaSourceIds: Set<String> = emptySet(),
         lowTierToleranceDuration: Duration = 5.seconds,
         instantSelectTierThreshold: MediaSourceTier = InstantSelectTierThreshold,
     ): Media? {
@@ -141,6 +142,7 @@ class MediaSelectorAutoSelect(
                         candidateResults.map { it.mediaSourceId },
                         overrideUserSelection = overrideUserSelection,
                         blacklistMediaIds = blacklistMediaIds,
+                        blacklistMediaSourceIds = blacklistMediaSourceIds,
                         allowNonPreferred = true, // 快速选择源是 web 源, 可以不考虑偏好. 
                     )
                 }
@@ -158,6 +160,7 @@ class MediaSelectorAutoSelect(
                         fallback.map { it.mediaSourceId },
                         overrideUserSelection = overrideUserSelection,
                         blacklistMediaIds = blacklistMediaIds,
+                        blacklistMediaSourceIds = blacklistMediaSourceIds,
                         allowNonPreferred = true, // 快速选择源是 web 源, 可以不考虑偏好. 
                     )
                 }

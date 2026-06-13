@@ -10,9 +10,11 @@
 package me.him188.ani.app.domain.player.extension
 
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withTimeout
 import me.him188.ani.app.domain.episode.EpisodeFetchSelectPlayState
 import me.him188.ani.app.domain.episode.EpisodeSession
 import me.him188.ani.app.domain.settings.GetVideoScaffoldConfigUseCase
@@ -44,7 +46,19 @@ class SwitchNextEpisodeExtension(
         }
 
         backgroundTaskScope.launch("SwitchNextEpisode") {
-            mediaLoaded.await() // 播放器开始播放了再启用自动下一集特性
+            try {
+                withTimeout(20_000L) {
+                    mediaLoaded.await() // 播放器开始播放了再启用自动下一集特性
+                }
+            } catch (_: TimeoutCancellationException) {
+                logger.info("剧集 ${episodeSession.episodeId} 无法加载媒体，尝试跳过")
+                val nextEpisode = getNextEpisode(episodeSession.episodeId)
+                if (nextEpisode != null && nextEpisode != episodeSession.episodeId) {
+                    context.switchEpisode(nextEpisode)
+                }
+                return@launch
+            }
+
             context.sessionFlow.collectLatest { session ->
                 getVideoScaffoldConfigUseCase()
                     .map { it.autoPlayNext }

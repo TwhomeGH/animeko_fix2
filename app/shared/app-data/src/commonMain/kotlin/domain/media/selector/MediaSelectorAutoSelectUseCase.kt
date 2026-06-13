@@ -104,10 +104,10 @@ class MediaSelectorAutoSelectUseCaseImpl(
 
                         val result = autoSelector.fastSelectWebSources(
                             session,
-                            getMediaSelectorSourceTiers().first(),
+                            sourceTiers = getMediaSelectorSourceTiers().first(),
                             overrideUserSelection = false,
                             blacklistMediaIds = emptySet(),
-                            selectorSettings.fastSelectWebLowTierToleranceDuration,
+                            lowTierToleranceDuration = selectorSettings.fastSelectWebLowTierToleranceDuration,
                         )
 
                         logger.info { "fastSelectWebSources result: $result" }

@@ -226,6 +226,7 @@ interface MediaSelector {
         candidateSources: List<String>,
         overrideUserSelection: Boolean = false,
         blacklistMediaIds: Set<String> = emptySet(),
+        blacklistMediaSourceIds: Set<String> = emptySet(),
         allowNonPreferred: Boolean = false,
     ): Media?
 
@@ -238,6 +239,7 @@ interface MediaSelector {
         candidateSources: List<String>,
         overrideUserSelection: Boolean = false,
         blacklistMediaIds: Set<String> = emptySet(),
+        blacklistMediaSourceIds: Set<String> = emptySet(),
         allowNonPreferred: Boolean = false,
     ): Media?
 
@@ -722,13 +724,17 @@ class DefaultMediaSelector(
         candidateSources: List<String>,
         overrideUserSelection: Boolean,
         blacklistMediaIds: Set<String>,
+        blacklistMediaSourceIds: Set<String>,
         allowNonPreferred: Boolean
     ): Media? {
         if (candidateSources.isEmpty()) return null
 
         fun bake(candidates: List<MaybeExcludedMedia.Included>): List<MaybeExcludedMedia.Included> {
-            return candidates.filter { it.result.mediaSourceId in candidateSources && it.result.mediaId !in blacklistMediaIds }
-                .sortedBy { candidateSources.indexOf(it.result.mediaSourceId) }
+            return candidates.filter {
+                it.result.mediaSourceId in candidateSources
+                    && it.result.mediaId !in blacklistMediaIds
+                    && it.result.mediaSourceId !in blacklistMediaSourceIds
+            }.sortedBy { candidateSources.indexOf(it.result.mediaSourceId) }
         }
 
         val selected = run {
@@ -772,13 +778,17 @@ class DefaultMediaSelector(
         candidateSources: List<String>,
         overrideUserSelection: Boolean,
         blacklistMediaIds: Set<String>,
+        blacklistMediaSourceIds: Set<String>,
         allowNonPreferred: Boolean
     ): Media? {
         if (candidateSources.isEmpty()) return null
 
         fun bake(candidates: List<MaybeExcludedMedia.Included>): List<MaybeExcludedMedia.Included> {
-            return candidates.filter { it.result.mediaSourceId in candidateSources && it.result.mediaId !in blacklistMediaIds }
-                .sortedBy { candidateSources.indexOf(it.result.mediaSourceId) }
+            return candidates.filter {
+                it.result.mediaSourceId in candidateSources
+                    && it.result.mediaId !in blacklistMediaIds
+                    && it.result.mediaSourceId !in blacklistMediaSourceIds
+            }.sortedBy { candidateSources.indexOf(it.result.mediaSourceId) }
         }
 
         val selected = combine(preferredCandidates, filteredCandidates) { preferred, candidates ->

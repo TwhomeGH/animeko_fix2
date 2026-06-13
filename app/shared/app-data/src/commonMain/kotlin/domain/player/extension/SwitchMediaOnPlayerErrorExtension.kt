@@ -50,6 +50,12 @@ class SwitchMediaOnPlayerErrorExtension(
     private val getMediaSelectorSettingsFlowUseCase: GetMediaSelectorSettingsFlowUseCase by koin.inject()
     private val getSourceTiersUseCase: GetMediaSelectorSourceTiersUseCase by koin.inject()
 
+    /**
+     * 跨集數持續存在的來源級黑名單。
+     * 當某個 media source 的媒體播放失敗時，其 [Media.mediaSourceId] 會被加入此集合，
+     * 後續所有集數的自動選擇都會跳過該來源。
+     */
+    private val blockedMediaSourceIds = mutableSetOf<String>()
 
     override fun onStart(
         episodeSession: EpisodeSession,
@@ -80,6 +86,7 @@ class SwitchMediaOnPlayerErrorExtension(
         val handler = PlayerLoadErrorHandler(
             getPreferKind = { getMediaSelectorSettingsFlowUseCase().first().preferKind },
             getSourceTiers = { getSourceTiersUseCase().first() },
+            blockedMediaSourceIds = blockedMediaSourceIds,
         )
 
         // 播放失败时自动切换下一个 media.
@@ -141,6 +148,11 @@ class SwitchMediaOnPlayerErrorExtension(
 internal class PlayerLoadErrorHandler(
     private val getPreferKind: suspend () -> MediaSourceKind?,
     private val getSourceTiers: suspend () -> MediaSelectorSourceTiers,
+    /**
+     * 跨集數持續存在的來源級黑名單。當某個 media source 的媒體播放失敗時，
+     * 其 [Media.mediaSourceId] 會被加入此集合。
+     */
+    private val blockedMediaSourceIds: MutableSet<String>,
 ) {
     private var blacklistedMediaIds = persistentHashSetOf<String>()
 
@@ -163,9 +175,10 @@ internal class PlayerLoadErrorHandler(
         // 播放出错了
         logger.info { "Player errored, automatically switching to next media" }
 
-        // 将当前播放的 mediaId 加入黑名单
+        // 将当前播放的 mediaId 加入黑名单, 并将整个 source 加入来源级黑名单
         mediaSelector.selected.value?.let {
             blacklistedMediaIds = blacklistedMediaIds.add(it.mediaId) // thread-safe
+            blockedMediaSourceIds.add(it.mediaSourceId)
         }
 
         delay(1.seconds) // 稍等让用户看到播放出错
@@ -186,6 +199,7 @@ internal class PlayerLoadErrorHandler(
             sourceTiers = sourceTiers,
             overrideUserSelection = true, // Note: 覆盖用户选择
             blacklistMediaIds = blacklistedMediaIds,
+            blacklistMediaSourceIds = blockedMediaSourceIds.toSet(),
             // 错误切换不需要等太长时间.
             lowTierToleranceDuration = 1.seconds,
         )

@@ -115,6 +115,7 @@ open class TestMediaSelector(
         candidateSources: List<String>,
         overrideUserSelection: Boolean,
         blacklistMediaIds: Set<String>,
+        blacklistMediaSourceIds: Set<String>,
         allowNonPreferred: Boolean
     ): Media? {
         throw UnsupportedOperationException()
@@ -124,6 +125,7 @@ open class TestMediaSelector(
         candidateSources: List<String>,
         overrideUserSelection: Boolean,
         blacklistMediaIds: Set<String>,
+        blacklistMediaSourceIds: Set<String>,
         allowNonPreferred: Boolean
     ): Media? {
         throw UnsupportedOperationException()
