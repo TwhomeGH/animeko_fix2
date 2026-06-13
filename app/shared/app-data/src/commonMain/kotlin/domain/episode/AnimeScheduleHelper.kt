@@ -107,7 +107,7 @@ object AnimeScheduleHelper {
                     }
 
                     lastEpisodeInstant != null -> {
-                        lastEpisodeInstant!!.plus(recurrence.interval)
+                        lastEpisodeInstant.plus(recurrence.interval)
                     }
 
                     else -> {

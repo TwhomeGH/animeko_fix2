@@ -21,6 +21,7 @@ import kotlinx.coroutines.selects.SelectBuilder
 import kotlinx.coroutines.selects.select
 import me.him188.ani.app.domain.media.fetch.MediaFetchSession
 import me.him188.ani.app.domain.mediasource.GetMediaSelectorSourceTiersUseCase
+import me.him188.ani.app.domain.player.extension.BlockedMediaSourceRegistry
 import me.him188.ani.app.domain.mediasource.GetPreferredWebMediaSourceUseCase
 import me.him188.ani.app.domain.settings.GetMediaSelectorSettingsFlowUseCase
 import me.him188.ani.app.domain.usecase.GlobalKoin
@@ -107,6 +108,7 @@ class MediaSelectorAutoSelectUseCaseImpl(
                             sourceTiers = getMediaSelectorSourceTiers().first(),
                             overrideUserSelection = false,
                             blacklistMediaIds = emptySet(),
+                            blacklistMediaSourceIds = BlockedMediaSourceRegistry.blockedMediaSourceIds.toSet(),
                             lowTierToleranceDuration = selectorSettings.fastSelectWebLowTierToleranceDuration,
                         )
 

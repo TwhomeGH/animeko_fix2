@@ -13,10 +13,12 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeout
 import me.him188.ani.app.domain.episode.EpisodeFetchSelectPlayState
 import me.him188.ani.app.domain.episode.EpisodeSession
+import me.him188.ani.app.domain.media.fetch.MediaSourceFetchState
 import me.him188.ani.app.domain.settings.GetVideoScaffoldConfigUseCase
 import me.him188.ani.utils.logging.info
 import me.him188.ani.utils.logging.logger
@@ -47,10 +49,31 @@ class SwitchNextEpisodeExtension(
 
         backgroundTaskScope.launch("SwitchNextEpisode") {
             try {
-                withTimeout(20_000L) {
+                val timeout = if (BlockedMediaSourceRegistry.blockedMediaSourceIds.isEmpty()) {
+                    20_000L // 没有已知故障的源，等久一点
+                } else {
+                    5_000L // 有来源被封锁，快速跳过
+                }
+                withTimeout(timeout) {
                     mediaLoaded.await() // 播放器开始播放了再启用自动下一集特性
                 }
-            } catch (_: TimeoutCancellationException) {
+            } catch (e: TimeoutCancellationException) {
+                val hasCaptcha = runCatching {
+                    withTimeout(5_000) {
+                        episodeSession.fetchSelectFlow.first()
+                    }
+                }.getOrNull()
+                    ?.mediaFetchSession
+                    ?.mediaSourceResults
+                    ?.any { it.state.value is MediaSourceFetchState.CaptchaRequired }
+                    ?: false
+
+                if (hasCaptcha) {
+                    logger.info("剧集 ${episodeSession.episodeId} 需要验证码，等待手动解决")
+                    mediaLoaded.await()
+                    return@launch
+                }
+
                 logger.info("剧集 ${episodeSession.episodeId} 无法加载媒体，尝试跳过")
                 val nextEpisode = getNextEpisode(episodeSession.episodeId)
                 if (nextEpisode != null && nextEpisode != episodeSession.episodeId) {

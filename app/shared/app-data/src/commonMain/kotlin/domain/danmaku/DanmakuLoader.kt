@@ -12,6 +12,7 @@ package me.him188.ani.app.domain.danmaku
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -90,6 +91,7 @@ class DanmakuLoaderImpl internal constructor(
                 val fetchRequest = request.toFetchRequest()
                 var localResult: List<DanmakuFetchResult>? = null
                 var remoteCanReplaceLocal = false
+                @OptIn(DelicateCoroutinesApi::class)
                 launch(start = CoroutineStart.ATOMIC) {
                     val result = fetchFromLocal(fetchRequest).first()
                     localResult = result

@@ -87,7 +87,7 @@ class DesktopWebMediaResolver(
             val webViewConfig = allMatchers.fold(WebViewConfig.Empty) { acc, matcher ->
                 matcher.patchConfig(acc)
             }
-            logger.info { "Final config: $webViewConfig" }
+            logger.info("Final config: $webViewConfig")
 
 
             val context = WebVideoMatcherContext(media)
@@ -95,13 +95,17 @@ class DesktopWebMediaResolver(
                 return allMatchers
                     .asSequence()
                     .map { matcher ->
-                        matcher.match(url, context)
+                        val result = matcher.match(url, context)
+                        logger.debug("WebVideoMatcher $matcher returned $result for URL: $url")
+                        result
                     }
                     .firstOrNull { it !is WebVideoMatcher.MatchResult.Continue }
             }
 
             val resourceMatcher = { url: String ->
-                when (match(url)) {
+                val matched = match(url)
+                logger.debug("resourceMatcher result for URL=$url => $matched")
+                when (matched) {
                     WebVideoMatcher.MatchResult.Continue -> Instruction.Continue
                     WebVideoMatcher.MatchResult.LoadPage -> Instruction.LoadPage
                     is WebVideoMatcher.MatchResult.Matched -> Instruction.FoundResource
@@ -154,12 +158,18 @@ class CefVideoExtractor(
             var client: org.cef.CefClient? = null
             var browser: CefBrowser? = null
             val deferred = CompletableDeferred<WebResource>()
+            var urlCount = 0
 
             try {
+                logger.info("CefVideoExtractor starting: pageUrl=$pageUrl, cookiesCount=${config.cookies.size}, timeout=${videoResolverSettings.effectiveResourceExtractionTimeoutMillis}ms")
+                config.cookies.forEachIndexed { i, c ->
+                    logger.debug("  cookie[$i]: $c")
+                }
+
                 val createdClient = AniCefApp.suspendCoroutineOnCefContext {
                     AniCefApp.createClient()
                 } ?: kotlin.run {
-                    logger.warn { "AniCefApp isn't initialized yet." }
+                    logger.warn("AniCefApp isn't initialized yet.")
                     return@withBrowserCreationPermit null
                 }
                 client = createdClient
@@ -196,18 +206,20 @@ class CefVideoExtractor(
                                     browser: CefBrowser
                                 ): Boolean = synchronized(this) {
                                     val url = request.url
+                                    urlCount++
                                     val matched = resourceMatcher(url)
+                                    logger.debug("[#$urlCount] CEF onBeforeResourceLoad: url=$url => instruction=$matched")
                                     when (matched) {
                                         Instruction.Continue -> return false
                                         Instruction.FoundResource -> {
                                             deferred.complete(WebResource(url))
-                                            logger.info { "Found video stream resource: $url" }
+                                            logger.info("Found video stream resource: $url")
                                             return true
                                         }
 
                                         Instruction.LoadPage -> {
                                             if (browser.url == url || lastUrl.value == url) return false // don't recurse
-                                            logger.info { "CEF loading nested page: $url, lastUrl=${lastUrl.value}" }
+                                            logger.info("CEF loading nested page: $url, lastUrl=${lastUrl.value}")
                                             lastUrl.value = url
                                             val escapedUrl = json.encodeToString(String.serializer(), url)
                                             AniCefApp.runOnCefContext {
@@ -234,7 +246,7 @@ class CefVideoExtractor(
                                 source: String?,
                                 line: Int
                             ): Boolean {
-                                logger.info { "CEF client console: ${message?.replace("\n", "\\n")} ($source:$line)" }
+                                logger.info("CEF client console: ${message?.replace("\n", "\\n")} ($source:$line)")
                                 return super.onConsoleMessage(browser, level, message, source, line)
                             }
                         },
@@ -248,18 +260,22 @@ class CefVideoExtractor(
                         cookieManager.setCookie(url.host, ktorCookie.toCefCookie())
                     }
 
-                    logger.info { "Fetching $pageUrl" }
+                    logger.info("Fetching $pageUrl")
                     // start browser immediately
                     createdBrowser.createImmediately()
                 }
 
-                withTimeoutOrNull(videoResolverSettings.effectiveResourceExtractionTimeoutMillis) {
+                val result = withTimeoutOrNull(videoResolverSettings.effectiveResourceExtractionTimeoutMillis) {
                     deferred.await()
                 }
+                if (result == null) {
+                    logger.warn("CefVideoExtractor timed out after ${videoResolverSettings.effectiveResourceExtractionTimeoutMillis}ms. Total URLs checked: $urlCount. deferred.isActive=${deferred.isActive}")
+                }
+                result
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
-                logger.error(e) { "Failed to get video url." }
+                logger.error("Failed to get video url. URLs checked: $urlCount", e)
                 if (deferred.isActive) {
                     deferred.cancel()
                 }
@@ -268,7 +284,7 @@ class CefVideoExtractor(
                 withContext(NonCancellable) {
                     AniCefApp.closeBrowserAndDisposeClient(browser, client)
                 }
-                logger.info { "CEF client is disposed." }
+                logger.info("CEF client is disposed. Total URLs checked: $urlCount")
             }
         }
     }

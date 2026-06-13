@@ -262,6 +262,7 @@ suspend inline fun EpisodeCollectionRepository.setEpisodeWatched(subjectId: Int,
         if (watched) UnifiedCollectionType.DONE else UnifiedCollectionType.WISH,
     )
 
+@Suppress("DEPRECATION")
 fun EpisodeCollectionInfo.toEntity(
     subjectId: Int,
     lastFetched: Long = currentTimeMillis(),
@@ -295,6 +296,7 @@ fun AniEpisodeCollection.toEpisodeCollectionInfo() =
         collectionType = collectionType.toUnifiedCollectionType(),
     )
 
+@Suppress("DEPRECATION")
 private fun EpisodeCollectionEntity.toEpisodeInfo(): EpisodeInfo {
     return EpisodeInfo(
         episodeId = this.episodeId,

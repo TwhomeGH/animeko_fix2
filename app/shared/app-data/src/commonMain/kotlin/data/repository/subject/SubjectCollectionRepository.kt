@@ -605,7 +605,7 @@ private fun SubjectCollectionEntity.toSubjectCollectionInfo(
         cachedCharactersUpdated = cachedCharactersUpdated,
         lastUpdated = lastUpdated,
         nsfwMode = if (nsfw) nsfwModeSettings else NsfwMode.DISPLAY,
-        relations = relations ?: SubjectRelations.Empty,
+        relations = relations,
     )
 }
 

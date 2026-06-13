@@ -50,13 +50,6 @@ class SwitchMediaOnPlayerErrorExtension(
     private val getMediaSelectorSettingsFlowUseCase: GetMediaSelectorSettingsFlowUseCase by koin.inject()
     private val getSourceTiersUseCase: GetMediaSelectorSourceTiersUseCase by koin.inject()
 
-    /**
-     * 跨集數持續存在的來源級黑名單。
-     * 當某個 media source 的媒體播放失敗時，其 [Media.mediaSourceId] 會被加入此集合，
-     * 後續所有集數的自動選擇都會跳過該來源。
-     */
-    private val blockedMediaSourceIds = mutableSetOf<String>()
-
     override fun onStart(
         episodeSession: EpisodeSession,
         backgroundTaskScope: ExtensionBackgroundTaskScope
@@ -86,7 +79,7 @@ class SwitchMediaOnPlayerErrorExtension(
         val handler = PlayerLoadErrorHandler(
             getPreferKind = { getMediaSelectorSettingsFlowUseCase().first().preferKind },
             getSourceTiers = { getSourceTiersUseCase().first() },
-            blockedMediaSourceIds = blockedMediaSourceIds,
+            blockedMediaSourceIds = BlockedMediaSourceRegistry.blockedMediaSourceIds,
         )
 
         // 播放失败时自动切换下一个 media.

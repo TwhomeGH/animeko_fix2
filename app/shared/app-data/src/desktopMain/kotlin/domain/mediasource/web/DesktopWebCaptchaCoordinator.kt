@@ -143,13 +143,13 @@ class DesktopWebCaptchaCoordinator(
 
         val key = request.storageKey()
         val session = getOrCreateSession(request)
-        return try {
-            val result = solveWithSession(session, request)
+        val result = solveWithSession(session, request)
+        if (result is WebCaptchaSolveResult.Solved) {
             rememberSolved(request, session, result)
-            result
-        } finally {
+        } else {
             disposeSession(key, session)
         }
+        return result
     }
 
     override suspend fun solveInteractively(request: WebCaptchaRequest): WebCaptchaSolveResult {
@@ -359,7 +359,20 @@ class DesktopWebCaptchaCoordinator(
                 sessions[key] = session
                 solvedResults[key] = result
                 solvedByMediaSource[request.mediaSourceId] = SolvedSessionEntry(key)
+                evictOldestSessionsLocked()
             }
+        }
+    }
+
+    private fun evictOldestSessionsLocked() {
+        val interactiveKey = interactiveSolveState?.let {
+            it.request.storageKey()
+        }
+        while (sessions.size > MAX_CACHED_SESSIONS) {
+            val oldestKey = sessions.keys.firstOrNull { it != interactiveKey } ?: break
+            sessions.remove(oldestKey)?.cancel()
+            solvedResults.remove(oldestKey)
+            solvedByMediaSource.entries.removeAll { (_, entry) -> entry.key == oldestKey }
         }
     }
 
@@ -900,6 +913,7 @@ class DesktopWebCaptchaCoordinator(
 
     private companion object {
         val EmptyComponent = JPanel()
+        private const val MAX_CACHED_SESSIONS = 5
     }
 }
 

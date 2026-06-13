@@ -229,6 +229,8 @@ abstract class SelectorMediaSourceEngine {
         val originalMediaList = episodes.mapNotNull { info ->
             val subtitleLanguages = guessSubtitleLanguages(info, parser)
             info.episodeSortOrEp ?: return@mapNotNull null
+            val playUrl = info.playUrl
+            if (!playUrl.startsWith("https://") && !playUrl.startsWith("http://")) return@mapNotNull null
             DefaultMedia(
                 mediaId = buildString {
                     append(mediaSourceId)
@@ -246,8 +248,8 @@ abstract class SelectorMediaSourceEngine {
                     append(info.episodeSortOrEp)
                 },
                 mediaSourceId = mediaSourceId,
-                originalUrl = info.playUrl,
-                download = ResourceLocation.WebVideo(info.playUrl),
+                originalUrl = playUrl,
+                download = ResourceLocation.WebVideo(playUrl),
                 originalTitle = buildString {
                     if (config.selectMedia.distinguishSubjectName) {
                         append(subjectName)

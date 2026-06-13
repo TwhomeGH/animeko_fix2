@@ -159,6 +159,7 @@ data class SubjectAiringInfo(
             info: SubjectInfo,
             mainEpisodeCount: Int,
         ): SubjectAiringInfo {
+            @Suppress("DEPRECATION")
             val kind = when {
                 info.completeDate.isValid -> SubjectAiringKind.COMPLETED
                 info.airDate < PackedDate.now() -> SubjectAiringKind.ON_AIR

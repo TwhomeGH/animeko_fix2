@@ -123,11 +123,11 @@ class CreateMediaFetchSelectBundleFlowUseCaseImpl(
             val selector = DefaultMediaSelector(
                 MediaSelectorContextFlowProducer(
                     // TODO: 2025/4/22 Collect all these information from the ani server
-                    flowOf(bundle.subjectCompleted ?: false), // accesses network
+                    flowOf(bundle.subjectCompleted), // accesses network
                     mediaSourceManager.allInstances.map { list ->
                         list.map { it.mediaSourceId }
                     },
-                    flowOf(bundle.seriesInfo ?: SubjectSeriesInfo.Fallback),
+                    flowOf(bundle.seriesInfo),
                     flowOf(bundle.subjectInfo),
                     flowOf(bundle.episodeInfo),
                     mediaSourceManager.mediaSourceTiersFlow(), // only access local settings
