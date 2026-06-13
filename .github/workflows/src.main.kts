@@ -1723,38 +1723,41 @@ class WithMatrix(
 
         return PackageDesktopAndUploadOutputs().apply {
             if (matrix.isMacOS && matrix.isAArch64) {
+                val macosDmg: UploadArtifact = UploadArtifact(
+                    name = ArtifactNames.macosDmg(matrix.arch),
+                    path_Untyped = "app/desktop/build/compose/binaries/main-release/dmg/Ani-*.dmg",
+                    overwrite = true,
+                    ifNoFilesFound = UploadArtifact.BehaviorIfNoFilesFound.Error,
+                )
                 usesWithAttempts(
                     name = "Upload macOS AArch64 dmg",
-                    action = UploadArtifact(
-                        name = ArtifactNames.macosDmg(matrix.arch),
-                        path_Untyped = "app/desktop/build/compose/binaries/main-release/dmg/Ani-*.dmg",
-                        overwrite = true,
-                        ifNoFilesFound = UploadArtifact.BehaviorIfNoFilesFound.Error,
-                    ),
+                    action = macosDmg,
                 )
             }
 
             if (matrix.isMacOS && matrix.isX64) {
+                val macosZip: UploadArtifact = UploadArtifact(
+                    name = ArtifactNames.macosPortable(matrix.arch),
+                    path_Untyped = "app/desktop/build/compose/binaries/main-release/app/Ani.app",
+                    overwrite = true,
+                    ifNoFilesFound = UploadArtifact.BehaviorIfNoFilesFound.Error,
+                )
                 usesWithAttempts(
                     name = "Upload macOS x86_64 ZIP",
-                    action = UploadArtifact(
-                        name = ArtifactNames.macosPortable(matrix.arch),
-                        path_Untyped = "app/desktop/build/compose/binaries/main-release/app/Ani.app",
-                        overwrite = true,
-                        ifNoFilesFound = UploadArtifact.BehaviorIfNoFilesFound.Error,
-                    ),
+                    action = macosZip,
                 )
             }
 
             if (matrix.isWindows) {
+                val windowsPkg: UploadArtifact = UploadArtifact(
+                    name = ArtifactNames.windowsPortable(),
+                    path_Untyped = "app/desktop/build/compose/binaries/main-release/app",
+                    overwrite = true,
+                    ifNoFilesFound = UploadArtifact.BehaviorIfNoFilesFound.Error,
+                )
                 usesWithAttempts(
                     name = "Upload Windows packages",
-                    action = UploadArtifact(
-                        name = ArtifactNames.windowsPortable(),
-                        path_Untyped = "app/desktop/build/compose/binaries/main-release/app",
-                        overwrite = true,
-                        ifNoFilesFound = UploadArtifact.BehaviorIfNoFilesFound.Error,
-                    ),
+                    action = windowsPkg,
                 )
             }
 
@@ -1786,14 +1789,15 @@ class WithMatrix(
                 // Expected output path: Animeko-x86_64.AppImage.
                 // If changed, change also uploadDesktopDistributions in :ci-helper
 
+                val linuxAppImage: UploadArtifact = UploadArtifact(
+                    name = ArtifactNames.linuxAppImage(matrix.arch),
+                    path_Untyped = "Animeko-x86_64.AppImage",
+                    overwrite = true,
+                    ifNoFilesFound = UploadArtifact.BehaviorIfNoFilesFound.Error,
+                )
                 usesWithAttempts(
                     name = "Upload Linux packages",
-                    action = UploadArtifact(
-                        name = ArtifactNames.linuxAppImage(matrix.arch),
-                        path_Untyped = "Animeko-x86_64.AppImage",
-                        overwrite = true,
-                        ifNoFilesFound = UploadArtifact.BehaviorIfNoFilesFound.Error,
-                    ),
+                    action = linuxAppImage,
                 )
             }
         }
