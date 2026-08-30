@@ -51,6 +51,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
@@ -247,6 +248,15 @@ private fun EpisodeScreenContent(
     }
 
     AutoPauseEffect(vm)
+    // 离开本页(切换到其他番剧/路由)时该 composable 会从组合中移除,
+    // 此时暂停播放, 避免上一个番剧继续在后台播放(ON_STOP 在桌面端切路由时不可靠).
+    DisposableEffect(vm.player) {
+        onDispose {
+            if (vm.player.playbackState.value.isPlaying) {
+                vm.player.pause()
+            }
+        }
+    }
     DisplayModeEffect(vm.videoScaffoldConfig)
 
     VideoNotifEffect(vm)
