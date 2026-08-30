@@ -54,6 +54,68 @@ ani.build.framework=true
 
 一个操作系统只能构建对应的桌面应用，例如 Windows 只能构建 Windows 应用，而不能构建 macOS 应用。
 
+> [!IMPORTANT]
+> **桌面端必须使用 JetBrains Runtime (JBR) 21，且必须带 JCEF**
+>
+> 桌面端内置浏览器基于 [JCEF](https://github.com/jetbrains/jcef)，需要 JBR（附 JCEF）
+> 才能打包与运行。使用 Adoptium 等不带 JCEF 的 JDK 会报
+> `NoClassDefFoundError: org/cef/handler/CefRequestHandlerAdapter`，且无法解析网页视频 URL。
+>
+> - 编译 Kotlin 时，Gradle 会根据 `gradle.properties` 的 `jvm.toolchain.vendor=jetbrains`
+>   自动下载并使用正确的 JBR 21。
+> - **打包/运行桌面应用**时，需要把 `org.gradle.java.home`（或 `JAVA_HOME` /
+>   `ANI_COMPOSE_JAVA_HOME`）指向带 JCEF 的 JBR，否则 Gradle daemon 用不带 JCEF 的 JDK 时
+>   无法 jlink `jcef` module。
+
+### Windows 一键打包（本地测试/调试版）
+
+项目提供 `scripts/build-desktop-distributable.ps1`，一键产出可执行目录（含 `Ani.exe` +
+JBR runtime + JCEF），适合本地测试与调试：
+
+```powershell
+# 生成可执行目录 (portable, 含 jcef.config 方便调试)
+powershell -File scripts/build-desktop-distributable.ps1
+
+# 指定本地后端 API 地址 (开发调试常用)
+powershell -File scripts/build-desktop-distributable.ps1 -ApiServer http://localhost:4394
+
+# 明确指定 JBR
+powershell -File scripts/build-desktop-distributable.ps1 -Jbr "C:\path\to\jbr"
+
+# 生成精简的 release 版 (不含 jcef.config 调试辅助)
+powershell -File scripts/build-desktop-distributable.ps1 -Release
+```
+
+脚本会依次从 `-Jbr`、`ANI_COMPOSE_JAVA_HOME`、`gradle.properties` 的
+`org.gradle.java.home`、`~/.gradle/jdks/*`（探测含 `jmods/jcef.jmod` 者）自动解析 JBR。
+
+产出的可执行目录位于 `app/desktop/build/compose/binaries/main/app/`，直接执行其中的
+`Ani.exe` 即可。
+
+#### Windows 本地调试：为什么 `:app:desktop:run` 没有 JCEF，不能播在线视频
+
+`./gradlew :app:desktop:run` 能启动 app（mpv、anitorrent、ffmpeg 都会加载、界面正常），
+但 **`org.cef.*` (JCEF) 的 class 在 dev run 的 classpath 上天生不存在**——JCEF 只通过
+`nativeDistributions.modules("jcef", ...)` 在打包时 jlink 进 runtime image。因此 dev run
+时会看到：
+
+```
+NoClassDefFoundError: org/cef/handler/CefRequestHandlerAdapter
+WebViewVideoExtractor: Failed to get video url.
+```
+
+这是 upstream 的既有设计，不是 bug。要用 JCEF 解析网页视频 URL 并验证完整播放，**必须
+用打包后的可执行文件**（见上方一键脚本），而不是 dev run。
+
+> [!TIP]
+> 若只是想快速验证 app 能否启动、mpv/播放器骨架是否正常（不依赖 JCEF 解析的来源），
+> `./gradlew :app:desktop:run` 仍可用。
+
+> [!NOTE]
+> 本 fork 的 Windows 桌面播放链路的完整调查现状、mpv-D3D11/Skiko-DX12 根因、
+> 以及所有**尚未处理**的事项（含 VLC backend 上游已弃用），见
+> [windows-desktop-playback-status](windows-desktop-playback-status.md)。
+
 ## 运行测试版应用
 
 参考 [testing](testing.md)。

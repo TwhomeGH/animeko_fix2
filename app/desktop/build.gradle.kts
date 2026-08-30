@@ -402,5 +402,6 @@ fun JavaExec.configureDevProperties() {
     }
     // MpvVerify 无头自测: ./gradlew :app:desktop:run -Pani.desktop.mainClass=...MpvVerifyKt -Pani.mpv.selftest=true
     systemProperty("ani.mpv.selftest", providers.gradleProperty("ani.mpv.selftest").getOrElse("false"))
+    systemProperty("ani.seekverify.video", providers.gradleProperty("ani.seekverify.video").getOrElse(""))
     workingDir(file("test-sandbox"))
 }
